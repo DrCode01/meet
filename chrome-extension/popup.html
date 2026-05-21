@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 340px;
+      background: #0d0d0d;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      color: #ff6b35;
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .search-row {
+      display: flex;
+      gap: 8px;
+    }
+    input {
+      flex: 1;
+      padding: 10px 14px;
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: #ff6b35; }
+    button {
+      padding: 10px 16px;
+      background: #ff6b35;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover { background: #e05a28; }
+    .chips {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      background: #1e1e1e;
+      border: 1px solid #2a2a2a;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip:hover {
+      background: #2a2a2a;
+      color: #ff6b35;
+      border-color: #ff6b35;
+    }
+    .footer {
+      margin-top: 18px;
+      font-size: 0.7rem;
+      color: #444;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Adult Search</h1>
+  <div class="search-row">
+    <input id="q" type="text" placeholder="granny deepthroat..." autofocus />
+    <button id="btn">Go</button>
+  </div>
+  <div class="chips">
+    <span class="chip" data-q="granny deepthroat">granny deepthroat</span>
+    <span class="chip" data-q="milf blowjob pov">milf blowjob pov</span>
+    <span class="chip" data-q="teen anal">teen anal</span>
+    <span class="chip" data-q="bbw amateur">bbw amateur</span>
+    <span class="chip" data-q="ebony squirt">ebony squirt</span>
+    <span class="chip" data-q="lesbian strapon">lesbian strapon</span>
+  </div>
+  <div class="footer">Searches xVideos · xHamster · SpankBang · Eporner · XNXX · RedTube</div>
+  <script src="popup.js"></script>
+</body>
+</html>

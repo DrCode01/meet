@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Adult Search Aggregator",
+  "version": "1.0",
+  "description": "Search multiple adult sites simultaneously",
+  "permissions": [],
+  "host_permissions": [
+    "https://www.xvideos.com/*",
+    "https://xhamster.com/*",
+    "https://spankbang.com/*",
+    "https://www.eporner.com/*",
+    "https://www.xnxx.com/*",
+    "https://www.redtube.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Adult Search",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["results.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
