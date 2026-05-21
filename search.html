@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Adult Search</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0d0d0d;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+  }
+  h1 { color: #ff6b35; font-size: 2.8rem; letter-spacing: -1px; margin-bottom: 6px; }
+  .sub { color: #555; font-size: 0.9rem; margin-bottom: 40px; }
+
+  .search-box {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 640px;
+    margin-bottom: 20px;
+  }
+  input {
+    flex: 1;
+    padding: 16px 22px;
+    background: #1a1a1a;
+    border: 2px solid #2a2a2a;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 1.05rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: #ff6b35; }
+  input::placeholder { color: #444; }
+  button.go {
+    padding: 16px 30px;
+    background: #ff6b35;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  button.go:hover { background: #e05a28; }
+  button.go:active { transform: scale(0.97); }
+
+  /* site toggles */
+  .sites-label {
+    font-size: 0.75rem;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    width: 100%;
+    max-width: 640px;
+  }
+  .sites {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    max-width: 640px;
+    margin-bottom: 30px;
+  }
+  .site-toggle {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    background: #141414;
+    border: 1.5px solid #2a2a2a;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .site-toggle:hover { border-color: #444; }
+  .site-toggle.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, #141414); }
+  .site-toggle .dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #333;
+    transition: background 0.15s;
+  }
+  .site-toggle.on .dot { background: var(--c); }
+  .site-toggle span { font-size: 0.82rem; color: #999; transition: color 0.15s; }
+  .site-toggle.on span { color: #ddd; }
+
+  /* quick searches */
+  .quick-label {
+    font-size: 0.75rem;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    width: 100%;
+    max-width: 640px;
+  }
+  .quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    max-width: 640px;
+    margin-bottom: 40px;
+  }
+  .chip {
+    padding: 6px 14px;
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .chip:hover { background: #1e1e1e; color: #ff6b35; border-color: #ff6b35; }
+
+  /* result flash */
+  #toast {
+    display: none;
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 0.9rem;
+    color: #aaa;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  #toast strong { color: #ff6b35; }
+</style>
+</head>
+<body>
+
+<h1>&#128269; Adult Search</h1>
+<p class="sub">Searches multiple sites at once &mdash; opens each in a new tab</p>
+
+<div class="search-box">
+  <input id="q" type="text" placeholder="e.g. granny deepthroat, milf anal pov..." autofocus />
+  <button class="go" onclick="doSearch()">Search</button>
+</div>
+
+<p class="sites-label">Search on:</p>
+<div class="sites" id="sites"></div>
+
+<p class="quick-label">Quick searches:</p>
+<div class="quick">
+  <span class="chip" onclick="quickSearch('granny deepthroat')">granny deepthroat</span>
+  <span class="chip" onclick="quickSearch('milf blowjob pov')">milf blowjob pov</span>
+  <span class="chip" onclick="quickSearch('bbw amateur homemade')">bbw amateur homemade</span>
+  <span class="chip" onclick="quickSearch('ebony squirt')">ebony squirt</span>
+  <span class="chip" onclick="quickSearch('teen anal first time')">teen anal first time</span>
+  <span class="chip" onclick="quickSearch('lesbian strapon')">lesbian strapon</span>
+  <span class="chip" onclick="quickSearch('mature wife interracial')">mature wife interracial</span>
+  <span class="chip" onclick="quickSearch('latina big ass')">latina big ass</span>
+  <span class="chip" onclick="quickSearch('asian massage')">asian massage</span>
+  <span class="chip" onclick="quickSearch('stepmom caught')">stepmom caught</span>
+  <span class="chip" onclick="quickSearch('bdsm bondage')">bdsm bondage</span>
+  <span class="chip" onclick="quickSearch('gangbang creampie')">gangbang creampie</span>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SITES = [
+  { name: 'xVideos',  color: '#d92f2f', url: q => `https://www.xvideos.com/?k=${q}` },
+  { name: 'xHamster', color: '#f47f2a', url: q => `https://xhamster.com/search/${q}` },
+  { name: 'SpankBang', color: '#e8642b', url: q => `https://spankbang.com/s/${q}/` },
+  { name: 'Eporner',  color: '#cc2222', url: q => `https://www.eporner.com/search/${q}/` },
+  { name: 'XNXX',    color: '#1a7cd9', url: q => `https://www.xnxx.com/search/${q}/0` },
+  { name: 'RedTube',  color: '#d62020', url: q => `https://www.redtube.com/?search=${q}` },
+  { name: 'YouPorn',  color: '#2a2a8a', url: q => `https://www.youporn.com/search/video/?query=${q}` },
+  { name: 'Tube8',   color: '#e07020', url: q => `https://www.tube8.com/search.html?q=${q}` },
+  { name: 'Beeg',    color: '#c01010', url: q => `https://beeg.com/search/${q}` },
+  { name: 'PornHub', color: '#f90',    url: q => `https://www.pornhub.com/video/search?search=${q}` },
+];
+
+// Render site toggles
+const sitesEl = document.getElementById('sites');
+SITES.forEach((s, i) => {
+  const el = document.createElement('div');
+  el.className = 'site-toggle on';
+  el.style.setProperty('--c', s.color);
+  el.dataset.i = i;
+  el.innerHTML = `<div class="dot"></div><span>${s.name}</span>`;
+  el.onclick = () => el.classList.toggle('on');
+  sitesEl.appendChild(el);
+});
+
+function getEnabled() {
+  return [...document.querySelectorAll('.site-toggle.on')].map(el => SITES[el.dataset.i]);
+}
+
+function doSearch() {
+  const raw = document.getElementById('q').value.trim();
+  if (!raw) return;
+  const q = encodeURIComponent(raw);
+  const enabled = getEnabled();
+  if (!enabled.length) { showToast('Select at least one site'); return; }
+  enabled.forEach(s => window.open(s.url(q), '_blank'));
+  showToast(`Opened <strong>${enabled.length}</strong> tabs for "${raw}"`);
+}
+
+function quickSearch(term) {
+  document.getElementById('q').value = term;
+  doSearch();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.display = 'none', 3000);
+}
+
+document.getElementById('q').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+</script>
+</body>
+</html>
