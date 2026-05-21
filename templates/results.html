@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ query }} — Adult Search</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d0d0d;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+    header {
+      background: #111;
+      border-bottom: 1px solid #222;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    header h1 {
+      color: #ff6b35;
+      font-size: 1.4rem;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    header a { text-decoration: none; }
+    .search-form {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+      max-width: 600px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 6px;
+      border: 2px solid #333;
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #ff6b35; }
+    button {
+      padding: 10px 20px;
+      background: #ff6b35;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: #e05a28; }
+    .meta {
+      padding: 16px 24px;
+      color: #666;
+      font-size: 0.88rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .meta strong { color: #aaa; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      padding: 24px;
+    }
+    .card {
+      background: #161616;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #1f1f1f;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: #ff6b35;
+    }
+    .card a { text-decoration: none; color: inherit; }
+    .thumb-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      background: #0a0a0a;
+      overflow: hidden;
+    }
+    .thumb-wrap img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.2s;
+    }
+    .card:hover .thumb-wrap img { transform: scale(1.04); }
+    .duration {
+      position: absolute;
+      bottom: 6px;
+      right: 8px;
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .site-tag {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      background: #ff6b35;
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .card-body {
+      padding: 12px;
+    }
+    .card-title {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: #ddd;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-meta {
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: #555;
+      display: flex;
+      gap: 10px;
+    }
+    .no-results {
+      text-align: center;
+      padding: 80px 24px;
+      color: #555;
+    }
+    .no-results h2 { font-size: 1.5rem; margin-bottom: 8px; }
+    .errors {
+      margin: 12px 24px;
+      padding: 10px 16px;
+      background: #1a1010;
+      border: 1px solid #3a1a1a;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #a06060;
+    }
+    .errors summary { cursor: pointer; color: #c07070; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/"><h1>&#128269; Adult Search</h1></a>
+    <form class="search-form" method="get" action="/search">
+      <input type="text" name="q" value="{{ query }}" />
+      <button type="submit">Search</button>
+    </form>
+  </header>
+
+  <div class="meta">
+    Found <strong>{{ total }}</strong> results for <strong>"{{ query }}"</strong>
+    across {{ sites | join(', ') }}
+  </div>
+
+  {% if errors %}
+  <details class="errors">
+    <summary>{{ errors | length }} site(s) failed to respond</summary>
+    <ul style="margin-top:8px;padding-left:16px;">
+      {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+
+  {% if results %}
+  <div class="grid">
+    {% for video in results %}
+    <div class="card">
+      <a href="{{ video.url }}" target="_blank" rel="noopener noreferrer">
+        <div class="thumb-wrap">
+          {% if video.thumbnail %}
+          <img src="{{ video.thumbnail }}" alt="{{ video.title }}" loading="lazy"
+               onerror="this.style.display='none'" />
+          {% endif %}
+          <span class="site-tag">{{ video.site }}</span>
+          {% if video.duration %}
+          <span class="duration">{{ video.duration }}</span>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <div class="card-title">{{ video.title }}</div>
+          <div class="card-meta">
+            {% if video.views %}<span>&#128065; {{ video.views }}</span>{% endif %}
+            {% if video.rating %}<span>&#11088; {{ video.rating }}</span>{% endif %}
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="no-results">
+    <h2>No results found</h2>
+    <p>Try different or fewer keywords. Some sites may be temporarily unavailable.</p>
+  </div>
+  {% endif %}
+</body>
+</html>

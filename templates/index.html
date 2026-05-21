@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adult Search Aggregator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d0d0d;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2.5rem;
+      color: #ff6b35;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+    .subtitle {
+      color: #888;
+      margin-bottom: 40px;
+      font-size: 0.95rem;
+    }
+    .search-form {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 650px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 14px 20px;
+      border-radius: 8px;
+      border: 2px solid #333;
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #ff6b35; }
+    button {
+      padding: 14px 28px;
+      background: #ff6b35;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover { background: #e05a28; }
+    .sites {
+      margin-top: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      max-width: 650px;
+    }
+    .site-badge {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    .examples {
+      margin-top: 30px;
+      color: #666;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    .examples span {
+      color: #ff6b35;
+      cursor: pointer;
+      margin: 0 6px;
+    }
+    .examples span:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>&#128269; Adult Search</h1>
+  <p class="subtitle">Search across multiple adult sites simultaneously</p>
+
+  <form class="search-form" method="get" action="/search">
+    <input type="text" name="q" placeholder="e.g. granny deepthroat, milf blowjob..." autofocus />
+    <button type="submit">Search</button>
+  </form>
+
+  <div class="examples">
+    Try:
+    <span onclick="document.querySelector('input').value=this.innerText">granny deepthroat</span>
+    <span onclick="document.querySelector('input').value=this.innerText">milf anal</span>
+    <span onclick="document.querySelector('input').value=this.innerText">teen blowjob pov</span>
+    <span onclick="document.querySelector('input').value=this.innerText">bbw amateur</span>
+  </div>
+
+  <div class="sites">
+    <strong style="color:#666;width:100%;text-align:center;margin-bottom:4px;font-size:0.8rem;">SEARCHING ACROSS:</strong>
+    <span class="site-badge">xVideos</span>
+    <span class="site-badge">xHamster</span>
+    <span class="site-badge">SpankBang</span>
+    <span class="site-badge">Eporner</span>
+    <span class="site-badge">XNXX</span>
+    <span class="site-badge">RedTube</span>
+  </div>
+</body>
+</html>
