@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Adult Search</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0d0d0d;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', sans-serif;
+  min-height: 100vh;
+}
+
+/* ── Lock screen ── */
+#lock {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  gap: 16px;
+}
+#lock h2 { color: #ff6b35; font-size: 1.8rem; }
+#lock p  { color: #555; font-size: 0.88rem; }
+#pw-input {
+  width: 100%;
+  max-width: 300px;
+  padding: 14px 18px;
+  background: #1a1a1a;
+  border: 2px solid #2a2a2a;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  text-align: center;
+  letter-spacing: 2px;
+  transition: border-color 0.2s;
+}
+#pw-input:focus { border-color: #ff6b35; }
+#unlock-btn {
+  width: 100%;
+  max-width: 300px;
+  padding: 14px;
+  background: #ff6b35;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+#unlock-btn:active { opacity: 0.85; }
+#lock-err { color: #e05555; font-size: 0.82rem; min-height: 18px; }
+
+/* ── App ── */
+#app { display: none; flex-direction: column; min-height: 100vh; }
+
+header {
+  background: #111;
+  border-bottom: 1px solid #1e1e1e;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.logo { color: #ff6b35; font-size: 1.2rem; font-weight: 700; white-space: nowrap; }
+
+.search-row {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+#q {
+  flex: 1;
+  padding: 10px 16px;
+  background: #1a1a1a;
+  border: 2px solid #2a2a2a;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 0;
+}
+#q:focus { border-color: #ff6b35; }
+#q::placeholder { color: #444; }
+#search-btn {
+  padding: 10px 18px;
+  background: #ff6b35;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#search-btn:active { opacity: 0.85; }
+
+/* site filter chips */
+#filter-bar {
+  padding: 10px 18px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #0f0f0f;
+  border-bottom: 1px solid #1a1a1a;
+}
+.fbtn {
+  padding: 5px 13px;
+  border-radius: 20px;
+  border: 1px solid #2a2a2a;
+  background: transparent;
+  color: #777;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.fbtn.active, .fbtn:active { background: #1e1e1e; color: #ff6b35; border-color: #ff6b35; }
+
+/* status dots */
+#status {
+  padding: 8px 18px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: #555;
+  border-bottom: 1px solid #151515;
+}
+.sdot { display: flex; align-items: center; gap: 5px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: #2a2a2a; }
+.dot.spin { background: #e0a020; animation: pulse 1s infinite; }
+.dot.ok   { background: #3cb371; }
+.dot.err  { background: #c0392b; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.35} }
+
+#meta { padding: 8px 18px; font-size: 0.78rem; color: #555; }
+
+/* grid */
+#grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 12px;
+  padding: 14px 18px;
+}
+@media(min-width:600px){ #grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; } }
+
+.card {
+  background: #161616;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 1px solid #1e1e1e;
+  transition: transform 0.15s, border-color 0.15s;
+  cursor: pointer;
+}
+.card:active { transform: scale(0.97); }
+.card:hover { border-color: #ff6b35; }
+.thumb {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  background: #0a0a0a;
+  overflow: hidden;
+}
+.thumb img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.thumb .no-img {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; color: #222;
+}
+.dur {
+  position: absolute; bottom: 5px; right: 7px;
+  background: rgba(0,0,0,.82);
+  color: #fff; font-size: 0.68rem;
+  padding: 2px 6px; border-radius: 4px; font-weight: 600;
+}
+.site-tag {
+  position: absolute; top: 5px; left: 7px;
+  font-size: 0.6rem; font-weight: 700;
+  padding: 2px 7px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: .4px; color: #fff;
+}
+.card-body { padding: 8px 10px 10px; }
+.card-title {
+  font-size: 0.8rem; color: #ccc; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.card-views { margin-top: 5px; font-size: 0.7rem; color: #555; }
+
+/* empty / chips */
+#empty { display: none; text-align: center; padding: 60px 20px; color: #444; }
+#empty h3 { font-size: 1.2rem; margin-bottom: 6px; color: #555; }
+
+#chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 12px 18px 0;
+}
+.chip {
+  padding: 6px 13px; background: #141414;
+  border: 1px solid #222; border-radius: 20px;
+  font-size: 0.78rem; color: #888; cursor: pointer;
+}
+.chip:active { color: #ff6b35; border-color: #ff6b35; }
+</style>
+</head>
+<body>
+
+<!-- Lock -->
+<div id="lock">
+  <h2>&#128274; Private</h2>
+  <p>Enter your password to continue</p>
+  <input id="pw-input" type="password" placeholder="Password" autocomplete="off"/>
+  <div id="lock-err"></div>
+  <button id="unlock-btn" onclick="unlock()">Unlock</button>
+</div>
+
+<!-- App -->
+<div id="app">
+  <header>
+    <span class="logo">&#128269; Search</span>
+    <div class="search-row">
+      <input id="q" type="text" placeholder="granny deepthroat, milf pov..."/>
+      <button id="search-btn" onclick="doSearch()">Go</button>
+    </div>
+  </header>
+
+  <div id="filter-bar">
+    <button class="fbtn active" data-site="all">All</button>
+  </div>
+
+  <div id="status" style="display:none"></div>
+  <div id="meta"></div>
+
+  <div id="chips">
+    <span class="chip" onclick="qs('granny deepthroat')">granny deepthroat</span>
+    <span class="chip" onclick="qs('milf blowjob pov')">milf blowjob pov</span>
+    <span class="chip" onclick="qs('bbw amateur')">bbw amateur</span>
+    <span class="chip" onclick="qs('ebony squirt')">ebony squirt</span>
+    <span class="chip" onclick="qs('teen anal')">teen anal</span>
+    <span class="chip" onclick="qs('lesbian strapon')">lesbian strapon</span>
+    <span class="chip" onclick="qs('mature wife interracial')">mature wife interracial</span>
+    <span class="chip" onclick="qs('latina big ass')">latina big ass</span>
+    <span class="chip" onclick="qs('stepmom caught')">stepmom caught</span>
+    <span class="chip" onclick="qs('gangbang creampie')">gangbang creampie</span>
+    <span class="chip" onclick="qs('bdsm bondage')">bdsm bondage</span>
+    <span class="chip" onclick="qs('asian massage')">asian massage</span>
+  </div>
+
+  <div id="grid"></div>
+  <div id="empty"><h3>No results found</h3><p>Try different keywords</p></div>
+</div>
+
+<script>
+// ── Password gate ──
+const HASH = '{{ pw_hash }}';
+const KEY  = 'asa_exp';
+const DAYS = 30;
+
+async function sha256(s) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+async function unlock() {
+  const val = document.getElementById('pw-input').value;
+  const h = await sha256(val);
+  if (h === HASH) {
+    localStorage.setItem(KEY, Date.now() + DAYS*86400000);
+    showApp();
+  } else {
+    const e = document.getElementById('lock-err');
+    e.textContent = 'Wrong password.';
+    document.getElementById('pw-input').value = '';
+    setTimeout(()=>e.textContent='', 2500);
+  }
+}
+document.getElementById('pw-input').addEventListener('keydown', e => { if(e.key==='Enter') unlock(); });
+
+function showApp() {
+  document.getElementById('lock').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('q').focus();
+}
+
+if (Date.now() < parseInt(localStorage.getItem(KEY)||0)) showApp();
+
+// ── Search ──
+let allResults = [];
+let activeSite = 'all';
+
+const SITE_COLORS = {
+  'xVideos':'#d92f2f','xHamster':'#f47f2a','SpankBang':'#e8642b',
+  'Eporner':'#cc2222','XNXX':'#1a7cd9','RedTube':'#d62020'
+};
+
+function qs(term) {
+  document.getElementById('q').value = term;
+  doSearch();
+}
+
+async function doSearch() {
+  const q = document.getElementById('q').value.trim();
+  if (!q) return;
+  document.getElementById('chips').style.display = 'none';
+  document.getElementById('empty').style.display = 'none';
+
+  const statusEl = document.getElementById('status');
+  statusEl.style.display = 'flex';
+  statusEl.innerHTML = 'Searching…';
+  document.getElementById('meta').textContent = '';
+  document.getElementById('grid').innerHTML = '';
+  allResults = [];
+  activeSite = 'all';
+  document.querySelectorAll('.fbtn[data-site]').forEach(b => {
+    if (b.dataset.site !== 'all') b.remove();
+  });
+  document.querySelector('.fbtn[data-site="all"]').classList.add('active');
+
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    allResults = data.results || [];
+
+    // Build site filter buttons
+    const sites = [...new Set(allResults.map(r=>r.site))];
+    const bar = document.getElementById('filter-bar');
+    sites.forEach(s => {
+      const b = document.createElement('button');
+      b.className = 'fbtn';
+      b.dataset.site = s;
+      b.textContent = s;
+      b.onclick = () => filterBy(s);
+      bar.appendChild(b);
+    });
+
+    // Status dots
+    statusEl.innerHTML = (data.site_stats||[]).map(ss =>
+      `<div class="sdot"><div class="dot ${ss.count>0?'ok':'err'}"></div><span>${ss.site} ${ss.count>0?ss.count:'✗'}</span></div>`
+    ).join('');
+
+    document.getElementById('meta').textContent =
+      `${allResults.length} results for "${q}"`;
+
+    renderGrid();
+  } catch(err) {
+    statusEl.innerHTML = '<span style="color:#e05555">Search failed. Is the server running?</span>';
+  }
+}
+
+function filterBy(site) {
+  activeSite = site;
+  document.querySelectorAll('.fbtn').forEach(b =>
+    b.classList.toggle('active', b.dataset.site === site)
+  );
+  renderGrid();
+}
+
+document.querySelector('.fbtn[data-site="all"]').onclick = () => filterBy('all');
+
+function renderGrid() {
+  const filtered = activeSite === 'all'
+    ? allResults
+    : allResults.filter(r => r.site === activeSite);
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  document.getElementById('empty').style.display = filtered.length ? 'none' : 'block';
+
+  filtered.forEach(v => {
+    const c = SITE_COLORS[v.site] || '#ff6b35';
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.onclick = () => window.open(v.url, '_blank');
+    card.innerHTML = `
+      <div class="thumb">
+        ${v.thumbnail
+          ? `<img src="${v.thumbnail}" alt="" loading="lazy" onerror="this.parentNode.innerHTML='<div class=no-img>▶</div>'">`
+          : '<div class="no-img">▶</div>'}
+        <span class="site-tag" style="background:${c}">${esc(v.site)}</span>
+        ${v.duration ? `<span class="dur">${esc(v.duration)}</span>` : ''}
+      </div>
+      <div class="card-body">
+        <div class="card-title">${esc(v.title)}</div>
+        ${v.views ? `<div class="card-views">👁 ${esc(v.views)}</div>` : ''}
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('q').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
+</script>
+</body>
+</html>

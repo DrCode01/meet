@@ -1,10 +1,16 @@
 import asyncio
+import os
 import aiohttp
 from fastapi import FastAPI, Request, Query
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from scrapers import ALL_SCRAPERS
+
+PW_HASH = os.getenv(
+    "PW_HASH",
+    "bea14985d52161d8bbfd5dee7235d31ed42eb037b11bfb38a2502519cdb996a1",
+)
 
 app = FastAPI(title="Adult Search Aggregator")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -13,13 +19,13 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("app.html", {"request": request, "pw_hash": PW_HASH})
 
 
-@app.get("/search", response_class=HTMLResponse)
-async def search(request: Request, q: str = Query(default="", min_length=1)):
+@app.get("/api/search")
+async def api_search(q: str = Query(default="", min_length=1)):
     results = []
-    errors = []
+    site_stats = []
 
     connector = aiohttp.TCPConnector(ssl=False, limit=20)
     async with aiohttp.ClientSession(connector=connector) as session:
@@ -28,38 +34,9 @@ async def search(request: Request, q: str = Query(default="", min_length=1)):
 
     for scraper_cls, outcome in zip(ALL_SCRAPERS, scraped):
         if isinstance(outcome, Exception):
-            errors.append(f"{scraper_cls.site_name}: {outcome}")
+            site_stats.append({"site": scraper_cls.site_name, "count": 0})
         else:
-            results.extend(outcome)
-
-    # Deduplicate by URL
-    seen = set()
-    unique = []
-    for r in results:
-        if r.url not in seen:
-            seen.add(r.url)
-            unique.append(r)
-
-    return templates.TemplateResponse("results.html", {
-        "request": request,
-        "query": q,
-        "results": unique,
-        "total": len(unique),
-        "errors": errors,
-        "sites": [s.site_name for s in ALL_SCRAPERS],
-    })
-
-
-@app.get("/api/search")
-async def api_search(q: str = Query(default="", min_length=1)):
-    results = []
-    connector = aiohttp.TCPConnector(ssl=False, limit=20)
-    async with aiohttp.ClientSession(connector=connector) as session:
-        tasks = [scraper().search(session, q) for scraper in ALL_SCRAPERS]
-        scraped = await asyncio.gather(*tasks, return_exceptions=True)
-
-    for outcome in scraped:
-        if not isinstance(outcome, Exception):
+            site_stats.append({"site": scraper_cls.site_name, "count": len(outcome)})
             results.extend([vars(r) for r in outcome])
 
     seen = set()
@@ -69,7 +46,7 @@ async def api_search(q: str = Query(default="", min_length=1)):
             seen.add(r["url"])
             unique.append(r)
 
-    return {"query": q, "total": len(unique), "results": unique}
+    return {"query": q, "total": len(unique), "results": unique, "site_stats": site_stats}
 
 
 if __name__ == "__main__":
