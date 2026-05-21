@@ -17,8 +17,57 @@
     justify-content: center;
     padding: 30px 20px;
   }
-  h1 { color: #ff6b35; font-size: 2.8rem; letter-spacing: -1px; margin-bottom: 6px; }
-  .sub { color: #555; font-size: 0.9rem; margin-bottom: 40px; }
+
+  /* ── lock screen ── */
+  #lock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    max-width: 340px;
+  }
+  #lock h2 { color: #ff6b35; font-size: 1.6rem; }
+  #lock p  { color: #555; font-size: 0.85rem; text-align: center; }
+  #lock input {
+    width: 100%;
+    padding: 14px 18px;
+    background: #1a1a1a;
+    border: 2px solid #2a2a2a;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 1rem;
+    outline: none;
+    text-align: center;
+    letter-spacing: 2px;
+    transition: border-color 0.2s;
+  }
+  #lock input:focus { border-color: #ff6b35; }
+  #lock button {
+    width: 100%;
+    padding: 14px;
+    background: #ff6b35;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  #lock button:hover { background: #e05a28; }
+  #lock-error {
+    color: #e05555;
+    font-size: 0.82rem;
+    min-height: 18px;
+    text-align: center;
+  }
+
+  /* ── main app (hidden until unlocked) ── */
+  #app { display: none; width: 100%; flex-direction: column; align-items: center; }
+
+  h1 { color: #ff6b35; font-size: 2.4rem; letter-spacing: -1px; margin-bottom: 6px; }
+  .sub { color: #555; font-size: 0.9rem; margin-bottom: 36px; }
 
   .search-box {
     display: flex;
@@ -27,7 +76,7 @@
     max-width: 640px;
     margin-bottom: 20px;
   }
-  input {
+  #q {
     flex: 1;
     padding: 16px 22px;
     background: #1a1a1a;
@@ -38,10 +87,10 @@
     outline: none;
     transition: border-color 0.2s;
   }
-  input:focus { border-color: #ff6b35; }
-  input::placeholder { color: #444; }
+  #q:focus { border-color: #ff6b35; }
+  #q::placeholder { color: #444; }
   button.go {
-    padding: 16px 30px;
+    padding: 16px 26px;
     background: #ff6b35;
     color: #fff;
     border: none;
@@ -54,8 +103,8 @@
   button.go:hover { background: #e05a28; }
   button.go:active { transform: scale(0.97); }
 
-  .sites-label {
-    font-size: 0.75rem;
+  .label {
+    font-size: 0.72rem;
     color: #444;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -69,13 +118,13 @@
     gap: 8px;
     width: 100%;
     max-width: 640px;
-    margin-bottom: 30px;
+    margin-bottom: 28px;
   }
   .site-toggle {
     display: flex;
     align-items: center;
     gap: 7px;
-    padding: 7px 14px;
+    padding: 7px 13px;
     background: #141414;
     border: 1.5px solid #2a2a2a;
     border-radius: 8px;
@@ -83,37 +132,22 @@
     transition: all 0.15s;
     user-select: none;
   }
-  .site-toggle:hover { border-color: #444; }
   .site-toggle.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, #141414); }
-  .site-toggle .dot {
-    width: 9px; height: 9px;
-    border-radius: 50%;
-    background: #333;
-    transition: background 0.15s;
-  }
+  .site-toggle .dot { width: 9px; height: 9px; border-radius: 50%; background: #333; transition: background 0.15s; }
   .site-toggle.on .dot { background: var(--c); }
-  .site-toggle span { font-size: 0.82rem; color: #999; transition: color 0.15s; }
+  .site-toggle span { font-size: 0.8rem; color: #888; transition: color 0.15s; }
   .site-toggle.on span { color: #ddd; }
 
-  .quick-label {
-    font-size: 0.75rem;
-    color: #444;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-    width: 100%;
-    max-width: 640px;
-  }
   .quick {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     width: 100%;
     max-width: 640px;
-    margin-bottom: 40px;
+    margin-bottom: 36px;
   }
   .chip {
-    padding: 6px 14px;
+    padding: 6px 13px;
     background: #141414;
     border: 1px solid #222;
     border-radius: 20px;
@@ -122,69 +156,123 @@
     cursor: pointer;
     transition: all 0.15s;
   }
-  .chip:hover { background: #1e1e1e; color: #ff6b35; border-color: #ff6b35; }
+  .chip:active, .chip:hover { background: #1e1e1e; color: #ff6b35; border-color: #ff6b35; }
 
   #toast {
     display: none;
     position: fixed;
-    bottom: 30px;
+    bottom: 28px;
     left: 50%;
     transform: translateX(-50%);
     background: #1e1e1e;
     border: 1px solid #333;
     border-radius: 10px;
-    padding: 12px 24px;
-    font-size: 0.9rem;
+    padding: 12px 22px;
+    font-size: 0.88rem;
     color: #aaa;
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     white-space: nowrap;
+    z-index: 999;
   }
   #toast strong { color: #ff6b35; }
 </style>
 </head>
 <body>
 
-<h1>&#128269; Adult Search</h1>
-<p class="sub">Searches multiple sites at once &mdash; opens each in a new tab</p>
-
-<div class="search-box">
-  <input id="q" type="text" placeholder="e.g. granny deepthroat, milf anal pov..." autofocus />
-  <button class="go" onclick="doSearch()">Search</button>
+<!-- Lock screen -->
+<div id="lock">
+  <h2>&#128274; Private</h2>
+  <p>Enter your password to continue</p>
+  <input id="pw" type="password" placeholder="Password" autocomplete="off" />
+  <div id="lock-error"></div>
+  <button onclick="unlock()">Unlock</button>
 </div>
 
-<p class="sites-label">Search on:</p>
-<div class="sites" id="sites"></div>
+<!-- Main app -->
+<div id="app">
+  <h1>&#128269; Adult Search</h1>
+  <p class="sub">Searches multiple sites at once &mdash; opens each in a new tab</p>
 
-<p class="quick-label">Quick searches:</p>
-<div class="quick">
-  <span class="chip" onclick="quickSearch('granny deepthroat')">granny deepthroat</span>
-  <span class="chip" onclick="quickSearch('milf blowjob pov')">milf blowjob pov</span>
-  <span class="chip" onclick="quickSearch('bbw amateur homemade')">bbw amateur homemade</span>
-  <span class="chip" onclick="quickSearch('ebony squirt')">ebony squirt</span>
-  <span class="chip" onclick="quickSearch('teen anal first time')">teen anal first time</span>
-  <span class="chip" onclick="quickSearch('lesbian strapon')">lesbian strapon</span>
-  <span class="chip" onclick="quickSearch('mature wife interracial')">mature wife interracial</span>
-  <span class="chip" onclick="quickSearch('latina big ass')">latina big ass</span>
-  <span class="chip" onclick="quickSearch('asian massage')">asian massage</span>
-  <span class="chip" onclick="quickSearch('stepmom caught')">stepmom caught</span>
-  <span class="chip" onclick="quickSearch('bdsm bondage')">bdsm bondage</span>
-  <span class="chip" onclick="quickSearch('gangbang creampie')">gangbang creampie</span>
+  <div class="search-box">
+    <input id="q" type="text" placeholder="e.g. granny deepthroat, milf anal pov..." />
+    <button class="go" onclick="doSearch()">Search</button>
+  </div>
+
+  <p class="label">Search on:</p>
+  <div class="sites" id="sites"></div>
+
+  <p class="label">Quick searches:</p>
+  <div class="quick">
+    <span class="chip" onclick="quickSearch('granny deepthroat')">granny deepthroat</span>
+    <span class="chip" onclick="quickSearch('milf blowjob pov')">milf blowjob pov</span>
+    <span class="chip" onclick="quickSearch('bbw amateur homemade')">bbw amateur homemade</span>
+    <span class="chip" onclick="quickSearch('ebony squirt')">ebony squirt</span>
+    <span class="chip" onclick="quickSearch('teen anal first time')">teen anal first time</span>
+    <span class="chip" onclick="quickSearch('lesbian strapon')">lesbian strapon</span>
+    <span class="chip" onclick="quickSearch('mature wife interracial')">mature wife interracial</span>
+    <span class="chip" onclick="quickSearch('latina big ass')">latina big ass</span>
+    <span class="chip" onclick="quickSearch('asian massage')">asian massage</span>
+    <span class="chip" onclick="quickSearch('stepmom caught')">stepmom caught</span>
+    <span class="chip" onclick="quickSearch('bdsm bondage')">bdsm bondage</span>
+    <span class="chip" onclick="quickSearch('gangbang creampie')">gangbang creampie</span>
+  </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
+const HASH = 'bea14985d52161d8bbfd5dee7235d31ed42eb037b11bfb38a2502519cdb996a1';
+const UNLOCK_KEY = 'asa_unlocked';
+const UNLOCK_DAYS = 30;
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function unlock() {
+  const val = document.getElementById('pw').value;
+  const h = await sha256(val);
+  if (h === HASH) {
+    localStorage.setItem(UNLOCK_KEY, Date.now() + UNLOCK_DAYS * 86400000);
+    showApp();
+  } else {
+    const err = document.getElementById('lock-error');
+    err.textContent = 'Wrong password. Try again.';
+    document.getElementById('pw').value = '';
+    setTimeout(() => err.textContent = '', 2500);
+  }
+}
+
+function showApp() {
+  document.getElementById('lock').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display = 'flex';
+  document.getElementById('q').focus();
+}
+
+// Auto-unlock if recently authenticated
+(function checkSession() {
+  const exp = parseInt(localStorage.getItem(UNLOCK_KEY) || '0');
+  if (Date.now() < exp) showApp();
+})();
+
+document.getElementById('pw').addEventListener('keydown', e => {
+  if (e.key === 'Enter') unlock();
+});
+
+// ── Search logic ──
 const SITES = [
-  { name: 'xVideos',  color: '#d92f2f', url: q => `https://www.xvideos.com/?k=${q}` },
-  { name: 'xHamster', color: '#f47f2a', url: q => `https://xhamster.com/search/${q}` },
+  { name: 'xVideos',   color: '#d92f2f', url: q => `https://www.xvideos.com/?k=${q}` },
+  { name: 'xHamster',  color: '#f47f2a', url: q => `https://xhamster.com/search/${q}` },
   { name: 'SpankBang', color: '#e8642b', url: q => `https://spankbang.com/s/${q}/` },
-  { name: 'Eporner',  color: '#cc2222', url: q => `https://www.eporner.com/search/${q}/` },
-  { name: 'XNXX',    color: '#1a7cd9', url: q => `https://www.xnxx.com/search/${q}/0` },
-  { name: 'RedTube',  color: '#d62020', url: q => `https://www.redtube.com/?search=${q}` },
-  { name: 'YouPorn',  color: '#2a2a8a', url: q => `https://www.youporn.com/search/video/?query=${q}` },
-  { name: 'Tube8',   color: '#e07020', url: q => `https://www.tube8.com/search.html?q=${q}` },
-  { name: 'Beeg',    color: '#c01010', url: q => `https://beeg.com/search/${q}` },
-  { name: 'PornHub', color: '#f90',    url: q => `https://www.pornhub.com/video/search?search=${q}` },
+  { name: 'Eporner',   color: '#cc2222', url: q => `https://www.eporner.com/search/${q}/` },
+  { name: 'XNXX',     color: '#1a7cd9', url: q => `https://www.xnxx.com/search/${q}/0` },
+  { name: 'RedTube',   color: '#d62020', url: q => `https://www.redtube.com/?search=${q}` },
+  { name: 'YouPorn',   color: '#3a3aaa', url: q => `https://www.youporn.com/search/video/?query=${q}` },
+  { name: 'Tube8',    color: '#e07020', url: q => `https://www.tube8.com/search.html?q=${q}` },
+  { name: 'Beeg',     color: '#c01010', url: q => `https://beeg.com/search/${q}` },
+  { name: 'PornHub',  color: '#f90',    url: q => `https://www.pornhub.com/video/search?search=${q}` },
 ];
 
 const sitesEl = document.getElementById('sites');
