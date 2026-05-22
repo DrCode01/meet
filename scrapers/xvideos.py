@@ -10,14 +10,11 @@ class XVideosScraper(BaseScraper):
 
     async def search(self, session: aiohttp.ClientSession, query: str) -> list[VideoResult]:
         encoded = urllib.parse.quote_plus(query)
-        pages = [
-            f"{self.base_url}/?k={encoded}",
-            f"{self.base_url}/?k={encoded}&p=2",
-        ]
         results = []
-        for url in pages:
-            html = await self.fetch(session, url)
-            if html:
+        for page in [1, 2]:
+            url = f"{self.base_url}/?k={encoded}&p={page}"
+            status, html = await self.fetch(session, url)
+            if status == 200 and html:
                 results.extend(self.parse(html))
         return results
 
@@ -27,18 +24,17 @@ class XVideosScraper(BaseScraper):
         for thumb in soup.select("div.thumb-block"):
             a = thumb.select_one("p.title a")
             img = thumb.select_one("img")
-            duration_el = thumb.select_one("span.duration")
+            dur = thumb.select_one("span.duration")
             if not a or not img:
                 continue
             href = a.get("href", "")
             if not href.startswith("http"):
                 href = self.base_url + href
-            thumbnail = img.get("data-src") or img.get("src", "")
             results.append(VideoResult(
                 title=a.get_text(strip=True),
                 url=href,
-                thumbnail=thumbnail,
-                duration=duration_el.get_text(strip=True) if duration_el else "",
+                thumbnail=img.get("data-src") or img.get("src", ""),
+                duration=dur.get_text(strip=True) if dur else "",
                 site=self.site_name,
             ))
         return results

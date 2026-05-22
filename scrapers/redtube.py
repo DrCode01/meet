@@ -10,39 +10,45 @@ class RedTubeScraper(BaseScraper):
 
     async def search(self, session: aiohttp.ClientSession, query: str) -> list[VideoResult]:
         encoded = urllib.parse.quote_plus(query)
-        pages = [
-            f"{self.base_url}/?search={encoded}",
-            f"{self.base_url}/?search={encoded}&page=2",
-        ]
         results = []
-        for url in pages:
-            html = await self.fetch(session, url)
-            if html:
+        for page in [1, 2]:
+            url = f"{self.base_url}/?search={encoded}&page={page}"
+            status, html = await self.fetch(session, url)
+            if status == 200 and html:
                 results.extend(self.parse(html))
         return results
 
     def parse(self, html: str) -> list[VideoResult]:
         soup = BeautifulSoup(html, "html.parser")
         results = []
-        for item in soup.select("li.video_item"):
-            a = item.select_one("a.video_link")
-            title_el = item.select_one("div.video_title")
+        items = (
+            soup.select("li.video_item")
+            or soup.select("div.video_item")
+            or soup.select("article.video-item")
+            or soup.select("[class*='video-item']")
+            or soup.select("[class*='videoItem']")
+        )
+        for item in items:
+            a = item.select_one("a.video_link") or item.select_one("a[href*='/']")
+            title_el = (
+                item.select_one("div.video_title")
+                or item.select_one("[class*='title']")
+            )
             img = item.select_one("img")
-            duration_el = item.select_one("span.video_duration")
-            views_el = item.select_one("span.videoViews")
+            dur = item.select_one("span.video_duration") or item.select_one("[class*='duration']")
+            views = item.select_one("span.videoViews") or item.select_one("[class*='views']")
             if not a:
                 continue
             href = a.get("href", "")
             if href and not href.startswith("http"):
                 href = self.base_url + href
             title = title_el.get_text(strip=True) if title_el else a.get("title", "")
-            thumbnail = img.get("data-src") or img.get("src", "") if img else ""
             results.append(VideoResult(
                 title=title,
                 url=href,
-                thumbnail=thumbnail,
-                duration=duration_el.get_text(strip=True) if duration_el else "",
+                thumbnail=img.get("data-src") or img.get("src", "") if img else "",
+                duration=dur.get_text(strip=True) if dur else "",
                 site=self.site_name,
-                views=views_el.get_text(strip=True) if views_el else "",
+                views=views.get_text(strip=True) if views else "",
             ))
         return results
