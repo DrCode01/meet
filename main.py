@@ -54,7 +54,10 @@ async def api_search(q: str = Query(default="", min_length=1)):
 
 @app.get("/api/debug")
 async def debug(site: str = Query(...), q: str = Query(default="test")):
-    """Temporary endpoint: shows what a site actually returns so we can fix selectors."""
+    """Shows HTTP status, selector counts, and the HTML section containing the first video block."""
+    from bs4 import BeautifulSoup
+    import re as _re
+
     scraper_cls = SCRAPER_MAP.get(site)
     if not scraper_cls:
         return {"error": f"Unknown site. Available: {list(SCRAPER_MAP.keys())}"}
@@ -63,15 +66,14 @@ async def debug(site: str = Query(...), q: str = Query(default="test")):
     import urllib.parse
     encoded = urllib.parse.quote_plus(q)
 
-    # Build the first search URL for this scraper
     site_urls = {
-        "XNXX": f"https://www.xnxx.com/search/{q.replace(' ', '+')}/0",
+        "XNXX":     f"https://www.xnxx.com/search/{q.replace(' ', '+')}/0",
         "xHamster": f"https://xhamster.com/search/{encoded}",
         "SpankBang": f"https://spankbang.com/s/{encoded}/",
-        "Eporner": f"https://www.eporner.com/api/v2/video/search/?query={encoded}&per_page=5&format=json",
-        "RedTube": f"https://www.redtube.com/?search={encoded}",
-        "xVideos": f"https://www.xvideos.com/?k={encoded}",
-        "PornHub": f"https://www.pornhub.com/webmasters/search?search={encoded}&per_page=3",
+        "Eporner":  f"https://www.eporner.com/api/v2/video/search/?query={encoded}&per_page=5&format=json",
+        "RedTube":  f"https://www.redtube.com/?search={encoded}",
+        "xVideos":  f"https://www.xvideos.com/?k={encoded}",
+        "PornHub":  f"https://www.pornhub.com/webmasters/search?search={encoded}&per_page=3",
     }
 
     url = site_urls.get(site, "")
@@ -82,13 +84,42 @@ async def debug(site: str = Query(...), q: str = Query(default="test")):
     async with aiohttp.ClientSession(connector=connector) as session:
         status, html = await scraper.fetch(session, url)
 
-    snippet = (html or "")[:3000]
+    if not html:
+        return {"site": site, "http_status": status, "error": "No response body"}
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Count candidate selectors so we know which ones exist
+    selector_counts = {
+        "div.thumb-block":      len(soup.select("div.thumb-block")),
+        "div.thumb":            len(soup.select("div.thumb")),
+        "div#mozaique":         len(soup.select("div#mozaique")),
+        "div.video-item":       len(soup.select("div.video-item")),
+        "article":              len(soup.select("article")),
+        "li.video_item":        len(soup.select("li.video_item")),
+        "div[class*=thumb]":    len(soup.select("div[class*=thumb]")),
+        "div[class*=video]":    len(soup.select("div[class*=video]")),
+        "a[href*=/video]":      len(soup.select("a[href*=/video]")),
+        "a img":                len(soup.select("a img")),
+    }
+
+    # Find the first chunk of HTML that looks like a video block
+    keywords = ["thumb", "video-item", "mozaique", "stream-item", "video_item"]
+    video_section = ""
+    for kw in keywords:
+        idx = html.find(kw)
+        if idx > 0:
+            start = max(0, idx - 100)
+            video_section = html[start:start + 2000]
+            break
+
     return {
         "site": site,
         "url": url,
         "http_status": status,
-        "response_length": len(html or ""),
-        "snippet": snippet,
+        "response_length": len(html),
+        "selector_counts": selector_counts,
+        "video_section_snippet": video_section,
     }
 
 
