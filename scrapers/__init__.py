@@ -1,18 +1,16 @@
 from .base import BaseScraper, VideoResult
-from .xvideos import XVideosScraper
-from .xhamster import XHamsterScraper
-from .spankbang import SpankBangScraper
-from .eporner import EpornerScraper
-from .xnxx import XnxxScraper
-from .redtube import RedTubeScraper
 from .pornhub import PornHubScraper
+from .xvideos import XVideosScraper
+from .eporner import EpornerScraper
+from .redtube_api import RedTubeApiScraper
+from .beeg import BeegScraper
+from .youporn import YouPornScraper
 
 ALL_SCRAPERS = [
     PornHubScraper,
     XVideosScraper,
-    XnxxScraper,
-    XHamsterScraper,
-    SpankBangScraper,
     EpornerScraper,
-    RedTubeScraper,
+    RedTubeApiScraper,
+    BeegScraper,
+    YouPornScraper,
 ]
