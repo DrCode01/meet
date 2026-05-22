@@ -301,8 +301,8 @@ let allResults = [];
 let activeSite = 'all';
 
 const SITE_COLORS = {
-  'xVideos':'#d92f2f','xHamster':'#f47f2a','SpankBang':'#e8642b',
-  'Eporner':'#cc2222','XNXX':'#1a7cd9','RedTube':'#d62020'
+  'PornHub':'#f90','xVideos':'#d92f2f','xHamster':'#f47f2a',
+  'SpankBang':'#e8642b','Eporner':'#cc2222','XNXX':'#1a7cd9','RedTube':'#d62020'
 };
 
 function qs(term) {
@@ -393,7 +393,10 @@ function renderGrid() {
       </div>
       <div class="card-body">
         <div class="card-title">${esc(v.title)}</div>
-        ${v.views ? `<div class="card-views">👁 ${esc(v.views)}</div>` : ''}
+        <div class="card-views">
+          ${v.views ? `👁 ${esc(v.views)}` : ''}
+          ${v.rating ? ` ⭐ ${esc(v.rating)}%` : ''}
+        </div>
       </div>`;
     grid.appendChild(card);
   });

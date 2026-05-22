@@ -10,16 +10,21 @@ class XVideosScraper(BaseScraper):
 
     async def search(self, session: aiohttp.ClientSession, query: str) -> list[VideoResult]:
         encoded = urllib.parse.quote_plus(query)
-        url = f"{self.base_url}/?k={encoded}"
-        html = await self.fetch(session, url)
-        if not html:
-            return []
-        return self.parse(html)
+        pages = [
+            f"{self.base_url}/?k={encoded}",
+            f"{self.base_url}/?k={encoded}&p=2",
+        ]
+        results = []
+        for url in pages:
+            html = await self.fetch(session, url)
+            if html:
+                results.extend(self.parse(html))
+        return results
 
     def parse(self, html: str) -> list[VideoResult]:
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "html.parser")
         results = []
-        for thumb in soup.select("div.thumb-block")[:20]:
+        for thumb in soup.select("div.thumb-block"):
             a = thumb.select_one("p.title a")
             img = thumb.select_one("img")
             duration_el = thumb.select_one("span.duration")

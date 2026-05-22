@@ -10,21 +10,43 @@ class SpankBangScraper(BaseScraper):
 
     async def search(self, session: aiohttp.ClientSession, query: str) -> list[VideoResult]:
         encoded = urllib.parse.quote_plus(query)
-        url = f"{self.base_url}/s/{encoded}/"
-        html = await self.fetch(session, url)
-        if not html:
-            return []
-        return self.parse(html)
+        pages = [
+            f"{self.base_url}/s/{encoded}/",
+            f"{self.base_url}/s/{encoded}/2/",
+        ]
+        results = []
+        for url in pages:
+            html = await self.fetch(session, url)
+            if html:
+                results.extend(self.parse(html))
+        return results
 
     def parse(self, html: str) -> list[VideoResult]:
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "html.parser")
         results = []
-        for item in soup.select("div.video-item")[:20]:
-            a = item.select_one("a")
-            title_el = item.select_one("p.n")
+        items = (
+            soup.select("div.video-item")
+            or soup.select("[class*='video-item']")
+            or soup.select("div.list-item")
+            or soup.select("article[class*='video']")
+        )
+        for item in items:
+            a = item.select_one("a[href]")
+            title_el = (
+                item.select_one("p.n")
+                or item.select_one("[class*='title']")
+                or item.select_one("[class*='name']")
+            )
             img = item.select_one("img")
-            duration_el = item.select_one("span.l")
-            views_el = item.select_one("span.v")
+            duration_el = (
+                item.select_one("span.l")
+                or item.select_one("[class*='dur']")
+                or item.select_one("[class*='time']")
+            )
+            views_el = (
+                item.select_one("span.v")
+                or item.select_one("[class*='view']")
+            )
             if not a or not title_el:
                 continue
             href = a.get("href", "")

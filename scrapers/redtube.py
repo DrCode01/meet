@@ -10,16 +10,21 @@ class RedTubeScraper(BaseScraper):
 
     async def search(self, session: aiohttp.ClientSession, query: str) -> list[VideoResult]:
         encoded = urllib.parse.quote_plus(query)
-        url = f"{self.base_url}/?search={encoded}"
-        html = await self.fetch(session, url)
-        if not html:
-            return []
-        return self.parse(html)
+        pages = [
+            f"{self.base_url}/?search={encoded}",
+            f"{self.base_url}/?search={encoded}&page=2",
+        ]
+        results = []
+        for url in pages:
+            html = await self.fetch(session, url)
+            if html:
+                results.extend(self.parse(html))
+        return results
 
     def parse(self, html: str) -> list[VideoResult]:
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "html.parser")
         results = []
-        for item in soup.select("li.video_item")[:20]:
+        for item in soup.select("li.video_item"):
             a = item.select_one("a.video_link")
             title_el = item.select_one("div.video_title")
             img = item.select_one("img")
@@ -31,9 +36,7 @@ class RedTubeScraper(BaseScraper):
             if href and not href.startswith("http"):
                 href = self.base_url + href
             title = title_el.get_text(strip=True) if title_el else a.get("title", "")
-            thumbnail = ""
-            if img:
-                thumbnail = img.get("data-src") or img.get("src", "")
+            thumbnail = img.get("data-src") or img.get("src", "") if img else ""
             results.append(VideoResult(
                 title=title,
                 url=href,

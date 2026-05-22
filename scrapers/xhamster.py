@@ -10,27 +10,55 @@ class XHamsterScraper(BaseScraper):
 
     async def search(self, session: aiohttp.ClientSession, query: str) -> list[VideoResult]:
         encoded = urllib.parse.quote_plus(query)
-        url = f"{self.base_url}/search/{encoded}"
-        html = await self.fetch(session, url)
-        if not html:
-            return []
-        return self.parse(html)
+        pages = [
+            f"{self.base_url}/search/{encoded}",
+            f"{self.base_url}/search/{encoded}?page=2",
+        ]
+        results = []
+        for url in pages:
+            html = await self.fetch(session, url)
+            if html:
+                results.extend(self.parse(html))
+        return results
 
     def parse(self, html: str) -> list[VideoResult]:
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "html.parser")
         results = []
-        for card in soup.select("div.thumb-list__item")[:20]:
-            a = card.select_one("a.thumb-image-container")
-            title_el = card.select_one("a.video-thumb-info__name")
+        # Try multiple selector patterns (site updates its HTML periodically)
+        cards = (
+            soup.select("div.thumb-list__item")
+            or soup.select("article.video-thumb")
+            or soup.select("[class*='videoThumb']")
+            or soup.select("div[class*='thumb-item']")
+        )
+        for card in cards:
+            a = (
+                card.select_one("a.thumb-image-container")
+                or card.select_one("a[href*='/videos/']")
+                or card.select_one("a")
+            )
+            title_el = (
+                card.select_one("a.video-thumb-info__name")
+                or card.select_one("[class*='title']")
+                or card.select_one("[class*='name']")
+            )
             img = card.select_one("img")
-            duration_el = card.select_one("div.thumb-image-container__duration")
-            views_el = card.select_one("div.video-thumb-views")
+            duration_el = (
+                card.select_one("div.thumb-image-container__duration")
+                or card.select_one("[class*='duration']")
+            )
+            views_el = (
+                card.select_one("div.video-thumb-views")
+                or card.select_one("[class*='views']")
+            )
             if not a or not title_el:
                 continue
             href = a.get("href", "")
-            thumbnail = ""
-            if img:
-                thumbnail = img.get("data-src") or img.get("src", "")
+            if href and not href.startswith("http"):
+                href = self.base_url + href
+            if not href or "/videos/" not in href:
+                continue
+            thumbnail = img.get("data-src") or img.get("src", "") if img else ""
             results.append(VideoResult(
                 title=title_el.get_text(strip=True),
                 url=href,
