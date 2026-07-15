@@ -1,6 +1,6 @@
 /* Service worker — offline-first caching for the Coach PWA.
    Bump CACHE when you ship changes so clients pick up the new files. */
-var CACHE = 'gymcoach-v1';
+var CACHE = 'gymcoach-v2';
 var ASSETS = [
   '.',
   'index.html',
@@ -8,8 +8,10 @@ var ASSETS = [
   'css/styles.css',
   'js/store.js',
   'js/data/exercises.js',
+  'js/data/foods.js',
   'js/engine/nutrition.js',
   'js/engine/analytics.js',
+  'js/engine/expenditure.js',
   'js/engine/training.js',
   'js/engine/coach.js',
   'js/charts.js',

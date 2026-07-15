@@ -250,3 +250,95 @@ h3 { font-size: 1rem; margin: 0; }
 @media (min-width: 560px) {
   .set-form { grid-template-columns: 1fr 1fr 1fr auto; }
 }
+
+/* ====================================================================== */
+/* MacroFactor-style nutrition experience                                 */
+/* ====================================================================== */
+
+/* weekly check-in banner */
+.checkin-banner { display: flex; align-items: center; gap: .75rem; border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--surface)); cursor: pointer; }
+.cib-l { flex: 1; }
+.cib-t { font-weight: 700; }
+
+/* energy summary + diary header */
+.energy-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin: .3rem 0 .7rem; }
+.ecell { text-align: center; }
+.ev { font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.el { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.ecell.over .ev { color: var(--danger); }
+.ecell.good .ev { color: var(--accent); }
+
+.bigbar { height: 12px; background: var(--surface-2); border-radius: 999px; overflow: hidden; margin: .2rem 0 .8rem; }
+.bigbar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius: 999px; transition: width .35s ease; }
+
+.macro-set { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+.mp-top { display: flex; justify-content: space-between; font-size: .78rem; margin-bottom: .22rem; }
+.mp-bar { height: 7px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.mp-fill { height: 100%; border-radius: 999px; transition: width .3s ease; }
+.mp-protein { background: var(--accent); }
+.mp-carbs { background: var(--series-1); }
+.mp-fat { background: var(--warn); }
+
+/* diary date nav */
+.diary-head .date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+.date-label { font-weight: 700; font-size: 1.05rem; }
+.date-nav .icon-btn { font-size: 1.5rem; line-height: 1; width: 2rem; }
+.icon-btn[disabled] { opacity: .3; }
+
+/* meals */
+.meal .card-head h3 { font-size: .98rem; }
+.food-list li.food-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: .5rem; }
+.fr-main { min-width: 0; }
+.fr-name { font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fr-kcal { font-variant-numeric: tabular-nums; font-weight: 600; font-size: .9rem; }
+.fr-del { font-size: .8rem; opacity: .5; }
+.fr-del:hover { opacity: 1; }
+.empty-meal { margin: .2rem 0 .5rem; }
+.add-food { margin-top: .5rem; }
+
+/* add-food modal */
+.af-modal { max-height: 88vh; overflow-y: auto; }
+.af-tabs { display: flex; gap: .3rem; margin-bottom: .7rem; background: var(--surface-2); padding: .25rem; border-radius: var(--radius-sm); }
+.af-tab { flex: 1; background: none; border: none; padding: .5rem; border-radius: 8px; font-weight: 600; font-size: .82rem; color: var(--muted); cursor: pointer; }
+.af-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+.af-input { width: 100%; padding: .7rem; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); margin-bottom: .5rem; }
+.af-actions { display: flex; gap: .5rem; margin-bottom: .6rem; }
+.af-actions .btn { flex: 1; }
+.food-results { max-height: 44vh; overflow-y: auto; }
+.food-result { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .5rem; cursor: pointer; padding: .5rem .2rem; }
+.food-result:active { background: var(--surface-2); }
+.fr-add { font-size: 1.3rem; color: var(--accent); font-weight: 700; width: 1.5rem; text-align: center; }
+.fr-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* serving picker */
+.serving-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.portion-preview { text-align: center; background: var(--surface-2); border-radius: var(--radius-sm); padding: .8rem; margin: .7rem 0; }
+.pp-kcal { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* check-in compare table */
+.big-number { font-size: 2.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.compare { display: flex; flex-direction: column; gap: .35rem; margin: .3rem 0 .7rem; }
+.cmp-row { display: grid; grid-template-columns: 1fr auto 1rem auto 3.2rem; align-items: center; gap: .4rem; padding: .35rem 0; border-bottom: 1px solid var(--line); }
+.cmp-row:last-child { border-bottom: none; }
+.cmp-label { font-weight: 600; font-size: .9rem; }
+.cmp-old, .cmp-new { font-variant-numeric: tabular-nums; }
+.cmp-new { font-weight: 700; }
+.cmp-arrow { color: var(--muted); text-align: center; }
+.cmp-delta { text-align: right; font-size: .78rem; }
+.cmp-delta .up { color: var(--accent); }
+.cmp-delta .down { color: var(--series-1); }
+
+/* plan card */
+.plan-card { border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
+.plan-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; margin-bottom: .6rem; }
+.pstat { background: var(--surface-2); border-radius: var(--radius-sm); padding: .7rem; text-align: center; }
+.psv { font-size: 1.15rem; font-weight: 800; }
+.psl { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+
+/* barcode scanner overlay */
+.scanner-overlay { position: fixed; inset: 0; z-index: 60; background: #000; display: flex; align-items: center; justify-content: center; }
+.scanner { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.scanner video { width: 100%; height: 100%; object-fit: cover; }
+.scan-frame { position: absolute; width: 70%; max-width: 320px; height: 140px; border: 3px solid var(--accent); border-radius: 14px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.45); }
+.scan-actions { position: absolute; bottom: calc(env(safe-area-inset-bottom) + 1.5rem); display: flex; gap: .6rem; }
+.scan-actions .btn { background: var(--surface); }

@@ -1,4 +1,4 @@
-# 🏋️ Coach — a science-based personal gym app
+# 🏋️ Coach — a science-based personal gym app (MacroFactor-style nutrition)
 
 A private, installable web app that acts as your evidence-based strength &
 physique coach. You log your body, food, training and recovery; it studies the
@@ -7,67 +7,71 @@ accounts, no server, no subscription. Everything runs in your browser and your
 data never leaves your device (unless you explicitly turn on the optional AI
 layer).
 
-> This branch (`claude/gym-coach-webapp-pr6ff6`) contains the gym app at the
-> repo root (`index.html`, `css/`, `js/`, `icons/`, `sw.js`). Unrelated files
-> from other branches may still be present and can be ignored.
+The nutrition side is modelled on **MacroFactor**: a real food diary, a
+**dynamic expenditure** estimate measured from your own data, and **weekly,
+adherence-neutral check-ins** that recalibrate your targets automatically.
+
+> The app lives at the repo root (`index.html`, `css/`, `js/`, `icons/`,
+> `sw.js`). Unrelated files from other branches may still be present and can be
+> ignored — only the app files above need to be hosted.
 
 ---
 
 ## What it does
 
-- **Onboarding** collects your body metrics, goal, experience, available days
-  and equipment, then builds a full training program + nutrition targets.
+- **Deep onboarding** collects your body metrics, body-fat %, daily activity,
+  goal + *goal weight*, pace, diet approach, experience, days and equipment,
+  then builds a **specific** training program **and** a locked nutrition plan.
+- **Food diary** (MacroFactor-style): log individual foods per meal
+  (Breakfast / Lunch / Dinner / Snacks) from a built-in offline database,
+  create custom foods, quick-add calories+macros, search **Open Food Facts**
+  online, and **scan barcodes** (camera where supported, else manual entry).
+- **Dynamic expenditure**: your real maintenance calories are back-calculated
+  from your intake and weight trend and updated continuously — see the trend
+  chart in *Trends* and the check-in.
+- **Weekly check-ins**: once a week the app recalculates your expenditure and
+  proposes new targets to keep you on your goal rate. Adherence-neutral — it
+  never scolds missed/over days, it just reads the trend and recalibrates.
 - **The coaching loop** (`js/engine/coach.js`) re-runs every time you log
-  anything. It re-derives every metric from your current data and produces a
-  prioritised list of actions plus today's plan — so the app is self-adjusting,
-  not a static tracker.
-- **Workout logger** shows today's session with a progression suggestion for
-  each lift (read from your last session) and lets you log sets with RPE.
-- **Nutrition tracker** with adaptive calorie targets and macro breakdown.
-- **Progress** charts: weight trend, estimated 1RM per lift, and weekly volume
-  vs. scientific landmarks.
-- **Coach view** explains *why* behind every recommendation, with the science.
-- **Optional AI review**: enable a Claude API key to get a natural-language
-  weekly review layered on top of the engine.
+  anything, re-deriving every metric and producing a prioritised action list,
+  today's plan, and a goal timeline (ETA to your target weight).
+- **Workout logger** with a per-lift progression suggestion read from your last
+  session; **Trends** charts (weight, expenditure, est. 1RM, weekly volume vs
+  landmarks); **Coach view** explains the *why* with the science.
+- **Optional AI review**: enable a Claude API key for a natural-language weekly
+  review layered on top of the engine.
 
 ---
 
 ## The science
 
-Everything the engine does is grounded in published sports-science. Key pieces:
-
-### Nutrition (`js/engine/nutrition.js`)
-- **BMR** via **Mifflin-St Jeor**; **Katch-McArdle** when body-fat % is known
-  (scales with fat-free mass, more accurate for lean/muscular people).
-- **TDEE** starts from the formula but switches to **empirical TDEE** once you
-  have ~10+ days of intake + weight data (maintenance = average intake − energy
-  from weight change). This individualises your calories to your real
-  metabolism.
-- **Adaptive calories**: your goal is expressed as a % bodyweight/week rate and
-  compared to your actual smoothed weight trend; targets nudge toward the goal
-  rate. Fat-loss has guard-rails so calories never drop below a safe floor.
-- **Protein** 1.6–2.2 g/kg (higher in a deficit to protect muscle — Morton et
-  al. 2018), **fat** ≥0.5 g/kg for hormones, **carbs** fill the rest, **fiber**
-  ~14 g/1000 kcal.
+### Nutrition & expenditure (`js/engine/nutrition.js`, `js/engine/expenditure.js`)
+- **BMR** via **Mifflin-St Jeor**; **Katch-McArdle** when body-fat % is known.
+- **Dynamic expenditure** — the MacroFactor idea: over a trailing window,
+  `expenditure ≈ average intake − (Δ trend-weight × 7700 kcal/kg) / days`,
+  computed from your smoothed weight trend. It starts from the formula and
+  switches to the data-driven value once you have ~10+ logged days, then keeps
+  self-correcting as your metabolism adapts.
+- **Locked weekly targets**: your calories/macros stay fixed between check-ins
+  so they don't fluctuate day to day; each **check-in** recomputes them from the
+  latest expenditure to hold your chosen % bodyweight/week rate, with guard-rails
+  so a cut never drops below a safe floor.
+- **Macros** honour your **diet approach** (balanced / low-carb / high-carb /
+  keto): **protein** 1.6–2.2 g/kg (Morton et al. 2018), a **fat** floor for
+  hormones, **carbs** fill the rest, **fiber** ~14 g/1000 kcal.
 
 ### Training (`js/engine/training.js` + `js/data/exercises.js`)
-- **Volume landmarks** per muscle (MEV / MAV / MRV — minimum-effective /
-  maximum-adaptive / maximum-recoverable weekly hard sets) from Renaissance
-  Periodization guidelines. The engine tells you which muscles are under- or
-  over-trained.
-- **Split selection** scales with your training days (full-body → upper/lower →
-  push/pull/legs) so each muscle is hit ~2×/week (Schoenfeld et al. 2016).
-- **Progressive overload** via **double progression** (add reps within the
-  range, then add load), with **linear progression** for beginners.
-- **Autoregulation** with RPE/RIR — hypertrophy work sits at RPE 7–9.
-- **Deload detection** from mesocycle timing, a fatigue score, and volume at/over
-  MRV; prescribes a ~50%-volume week.
+- **Volume landmarks** per muscle (MEV / MAV / MRV) from Renaissance
+  Periodization; the engine flags under- and over-trained muscles.
+- **Split selection** scales with your days so each muscle is hit ~2×/week
+  (Schoenfeld et al. 2016).
+- **Progressive overload** via **double progression** (linear for beginners),
+  **RPE autoregulation** at 7–9, and **deload detection**.
 
 ### Analytics (`js/engine/analytics.js`)
-- Bodyweight reported as an **exponentially-weighted moving average** so the
-  *trend*, not daily water noise, drives decisions.
-- Strength tracked as **estimated 1RM (Epley)** so different rep ranges compare.
-- **Fatigue score** from sleep, soreness, energy and stress.
+- Bodyweight as an **exponentially-weighted moving average** (trend, not noise).
+- Strength as **estimated 1RM (Epley)**; **fatigue score** from sleep,
+  soreness, energy and stress.
 
 > Educational tool, not medical advice. See a professional for pain, injury, or
 > health concerns.
@@ -76,32 +80,42 @@ Everything the engine does is grounded in published sports-science. Key pieces:
 
 ## Run it
 
-It's a plain static app — no build step.
+Plain static app — no build step.
 
 **Locally:**
 ```bash
 python3 serve.py        # serves on http://localhost:8000
 ```
-Open the printed URL. (A server is used rather than opening the file directly so
-the service worker / offline install works.)
+Open the printed URL. (A server is used so the service worker / offline install
+works.)
 
-**Install to your phone:** deploy the folder to any static host (Render static
-site, GitHub Pages, Netlify, Vercel, …), open the URL on your phone, and use
-"Add to Home Screen". It then works offline and behaves like a native app.
+**Host it yourself:** the app is fully static, so hosting is drag-and-drop. Two
+easy options:
+- **Netlify / Vercel / Cloudflare Pages:** drop the app files
+  (`index.html`, `manifest.webmanifest`, `sw.js`, `css/`, `js/`, `icons/`) into
+  a new site — no build settings needed.
+- **GitHub Pages:** put those files on a branch and set **Settings → Pages →
+  Source** to that branch; your URL will be `https://<owner>.github.io/<repo>/`.
 
-**Your data:** stored in your browser's `localStorage`. Use
-Settings → Export to back it up or move it to another device.
+Whichever you pick, only the static files are served — your logged data always
+stays in your own browser.
+
+**Install to your phone:** open the URL and use “Add to Home Screen.” It then
+works offline like a native app.
+
+**Your data:** stored in your browser's `localStorage`. Settings → Export backs
+it up or moves it to another device. Online food search / barcode lookup send
+only your search text or barcode to Open Food Facts.
 
 ---
 
 ## Optional AI coach
 
-Off by default and fully optional. In Settings you can enable AI reviews and
-paste a Claude API key (from `console.anthropic.com`). When enabled, the app
-sends a compact summary of your metrics + the engine's analysis to Claude and
-shows a short conversational weekly review. The key is stored only in your
-browser and is sent only to Anthropic. Leave it off to keep the app 100%
-offline and free — the science engine works fully without it.
+Off by default. In Settings you can enable AI reviews and paste a Claude API key
+(from `console.anthropic.com`). When enabled, the app sends a compact summary of
+your metrics + the engine's analysis to Claude and shows a short weekly review.
+The key is stored only in your browser and sent only to Anthropic. Leave it off
+to keep the app 100% offline and free — the engine works fully without it.
 
 ---
 
@@ -112,17 +126,20 @@ index.html              app shell (loads scripts in order)
 manifest.webmanifest    PWA manifest
 sw.js                   service worker (offline cache)
 serve.py                local static server
+.github/workflows/      GitHub Pages deploy workflow
 css/styles.css          theme-aware styles (dark default + light)
 icons/                  app icons (SVG + PNG)
 js/
   store.js              private localStorage data layer + event bus
   data/exercises.js     exercise library + volume landmarks
+  data/foods.js         offline food database + search + Open Food Facts
   engine/
-    nutrition.js        BMR/TDEE, adaptive calories, macros
+    nutrition.js        BMR, formula TDEE, macro split (diet approaches)
+    expenditure.js      dynamic expenditure, locked targets, weekly check-ins
     analytics.js        weight trend, 1RM, volume, adherence, fatigue
     training.js         program generation, progression, deload
-    coach.js            the loop — ties it together into insights + plan
+    coach.js            the loop — insights + today's plan + goal timeline
   charts.js             tiny dependency-free SVG charts
   ai.js                 optional Claude review layer
-  app.js                UI, routing, onboarding, views
+  app.js                UI, routing, onboarding, diary, check-in, views
 ```

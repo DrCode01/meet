@@ -13,23 +13,25 @@
 (function () {
   'use strict';
 
-  var N = window.Nutrition, T = window.Training, A = window.Analytics, DB = window.ExerciseDB;
+  var T = window.Training, A = window.Analytics, DB = window.ExerciseDB, X = window.Expenditure;
 
   function analyze(state) {
     var trend = A.weightTrend(state);
     var body = A.bodyStats(state, trend);
-    var targets = N.targets(state, trend);
+    var targets = X.currentTargets(state, trend);
+    var checkin = X.checkInStatus(state, trend);
     var weeklyVol = A.weeklyVolume(state, 7);
     var volGuidance = T.volumeGuidance(weeklyVol);
     var adherence = A.adherence(state, targets, 7);
     var fatigue = A.fatigueScore(state);
     var deload = T.deloadCheck(state, fatigue, weeklyVol, state.program);
     var strength = A.strengthByExercise(state);
+    var plan = buildPlan(state, trend, body, targets);
 
     var insights = buildInsights(state, {
       trend: trend, body: body, targets: targets, weeklyVol: weeklyVol,
       volGuidance: volGuidance, adherence: adherence, fatigue: fatigue,
-      deload: deload, strength: strength
+      deload: deload, strength: strength, checkin: checkin, plan: plan
     });
 
     var todayPlan = planToday(state, targets, deload);
@@ -39,11 +41,42 @@
       metrics: {
         trend: trend, body: body, targets: targets, weeklyVol: weeklyVol,
         volGuidance: volGuidance, adherence: adherence, fatigue: fatigue,
-        deload: deload, strength: strength
+        deload: deload, strength: strength, checkin: checkin
       },
+      plan: plan,
       insights: insights,
       todayPlan: todayPlan
     };
+  }
+
+  // A concrete, goal-specific plan: where you are, where you're going, and the
+  // timeline the current targets imply.
+  function buildPlan(state, trend, body, targets) {
+    var g = state.goals;
+    var curW = trend && trend.currentKg ? trend.currentKg : (body ? body.weightKg : null);
+    var plan = {
+      goalType: g.type,
+      currentKg: curW,
+      targetKg: g.targetWeightKg || null,
+      ratePct: targets.ratePct,
+      kgPerWeek: targets.kgPerWeek,
+      kcal: targets.kcal,
+      protein: targets.protein,
+      expenditure: targets.expenditure,
+      etaWeeks: null, etaDate: null, toGoKg: null
+    };
+    if (curW && g.targetWeightKg) {
+      var toGo = g.targetWeightKg - curW;
+      plan.toGoKg = Math.round(toGo * 10) / 10;
+      var perWeek = targets.kgPerWeek;
+      if (perWeek && ((toGo < 0 && perWeek < 0) || (toGo > 0 && perWeek > 0))) {
+        var weeks = Math.abs(toGo / perWeek);
+        plan.etaWeeks = Math.ceil(weeks);
+        var d = new Date(); d.setDate(d.getDate() + Math.ceil(weeks * 7));
+        plan.etaDate = d.toISOString().slice(0, 10);
+      }
+    }
+    return plan;
   }
 
   // priority: 1 = act now, 2 = this week, 3 = FYI
@@ -54,6 +87,13 @@
   function buildInsights(state, m) {
     var out = [];
     var goals = state.goals;
+
+    // ---- Weekly check-in (the MacroFactor cadence) --------------------
+    if (m.checkin && m.checkin.due) {
+      out.push(ins(1, 'checkin', 'Weekly check-in is ready',
+        'It\'s been ' + m.checkin.daysSince + ' days. I can recalculate your real expenditure from this week\'s data and update your targets to keep you on your goal rate. Open the check-in to review and apply.',
+        'Recalibrating targets on a weekly cadence from the measured trend — rather than daily — keeps calories stable while still adapting to metabolic changes.'));
+    }
 
     // ---- Weight trend vs goal rate ------------------------------------
     if (m.trend && m.trend.rateKgPerWeek != null && m.targets) {
@@ -88,11 +128,18 @@
         'A weekly-averaged weight trend is the most reliable readout of energy balance and drives adaptive calorie targets.'));
     }
 
+    // ---- Goal timeline ------------------------------------------------
+    if (m.plan && m.plan.etaWeeks != null && m.plan.toGoKg != null && Math.abs(m.plan.toGoKg) > 0.3) {
+      out.push(ins(3, 'goal', 'On pace for your goal',
+        (m.plan.toGoKg > 0 ? '+' : '') + m.plan.toGoKg + ' kg to your target of ' + m.plan.targetKg + ' kg. At your current rate that\'s about ' + m.plan.etaWeeks + ' weeks (~' + shortDate(m.plan.etaDate) + ').',
+        'A defined target and rate turns a vague goal into a schedule you can actually hold yourself to.'));
+    }
+
     // ---- TDEE method note ---------------------------------------------
-    if (m.targets && m.targets.tdee && m.targets.tdee.method === 'empirical') {
+    if (m.targets && m.targets.tdee && m.targets.tdee.method === 'adaptive') {
       out.push(ins(3, 'nutrition', 'Calories are now data-driven',
-        'Your maintenance is estimated at ~' + m.targets.tdee.value + ' kcal from your real intake and weight change (not just the formula).',
-        'Empirical TDEE (intake minus weight-change energy) individualises targets far better than population equations.'));
+        'Your maintenance is measured at ~' + m.targets.tdee.value + ' kcal from your real intake and weight change (not just the formula).',
+        'Adaptive expenditure (intake minus weight-change energy) individualises targets far better than population equations, and tracks metabolic adaptation as it happens.'));
     }
 
     // ---- Deload -------------------------------------------------------
@@ -211,6 +258,12 @@
   function fmtRate(kg) {
     var s = kg > 0 ? '+' : '';
     return s + (Math.round(kg * 100) / 100) + ' kg';
+  }
+
+  function shortDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
 
   window.Coach = { analyze: analyze };
