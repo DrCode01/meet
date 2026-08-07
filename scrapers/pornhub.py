@@ -1,38 +1,31 @@
 import urllib.parse
-import aiohttp
-from .base import BaseScraper, VideoResult
+
+from .base import BaseScraper, VideoResult, find_video_list, first_str
 
 
 class PornHubScraper(BaseScraper):
     site_name = "PornHub"
     base_url = "https://www.pornhub.com"
 
-    async def search(self, session: aiohttp.ClientSession, query: str) -> list[VideoResult]:
-        results = []
-        for page in [1, 2]:
-            encoded = urllib.parse.quote_plus(query)
-            url = f"{self.base_url}/webmasters/search?search={encoded}&per_page=20&page={page}&ordering=mostviewed"
-            try:
-                async with session.get(url, headers={
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                    "Accept": "application/json",
-                }, timeout=aiohttp.ClientTimeout(total=12)) as resp:
-                    if resp.status != 200:
-                        break
-                    data = await resp.json(content_type=None)
-                    videos = data.get("videos", [])
-                    if not videos:
-                        break
-                    for v in videos:
-                        results.append(VideoResult(
-                            title=v.get("title", ""),
-                            url=v.get("url", ""),
-                            thumbnail=v.get("thumb", ""),
-                            duration=v.get("duration", ""),
-                            site=self.site_name,
-                            views=str(v.get("views", "")),
-                            rating=str(v.get("rating", "")),
-                        ))
-            except Exception:
-                break
-        return results
+    def search_urls(self, query: str) -> list[str]:
+        encoded = urllib.parse.quote_plus(query)
+        return [
+            f"{self.base_url}/webmasters/search?search={encoded}"
+            f"&per_page=20&page={page}&ordering=mostviewed"
+            for page in (1, 2)
+        ]
+
+    def parse(self, body: str) -> list[VideoResult]:
+        return [
+            VideoResult(
+                title=first_str(v, "title"),
+                url=first_str(v, "url"),
+                thumbnail=first_str(v, "thumb", "default_thumb"),
+                duration=first_str(v, "duration"),
+                site=self.site_name,
+                views=first_str(v, "views"),
+                rating=first_str(v, "rating"),
+            )
+            for v in find_video_list(self.load_json(body))
+            if v.get("url")
+        ]

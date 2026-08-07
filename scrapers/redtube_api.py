@@ -1,8 +1,8 @@
 import urllib.parse
-import aiohttp
-from .base import BaseScraper, VideoResult
 
-# RedTube has a public JSON API at a separate domain — not blocked like www.redtube.com
+from .base import BaseScraper, VideoResult, find_video_list, first_str
+
+# RedTube's public JSON API lives on a separate host to www.redtube.com.
 _API = "https://api.redtube.com/"
 
 
@@ -10,47 +10,38 @@ class RedTubeApiScraper(BaseScraper):
     site_name = "RedTube"
     base_url = "https://www.redtube.com"
 
-    async def search(self, session: aiohttp.ClientSession, query: str) -> list[VideoResult]:
-        results = []
-        for page in [1, 2]:
-            params = {
+    def search_urls(self, query: str) -> list[str]:
+        return [
+            _API + "?" + urllib.parse.urlencode({
                 "data": "redtube.Videos.searchVideos",
                 "search": query,
                 "output": "json",
                 "thumbsize": "medium",
                 "page": str(page),
-                "limit": "30",
-            }
-            url = _API + "?" + urllib.parse.urlencode(params)
-            try:
-                async with session.get(
-                    url,
-                    headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"},
-                    timeout=aiohttp.ClientTimeout(total=12),
-                ) as resp:
-                    if resp.status != 200:
-                        break
-                    data = await resp.json(content_type=None)
-                    videos = data.get("videos", [])
-                    if not videos:
-                        break
-                    for item in videos:
-                        v = item.get("video", item)
-                        url_v = v.get("url") or f"{self.base_url}/{v.get('video_id', '')}"
-                        thumb = v.get("thumb", "")
-                        # pick highest res thumb available
-                        thumbs = v.get("thumbs", [])
-                        if thumbs:
-                            thumb = thumbs[-1].get("src", thumb)
-                        results.append(VideoResult(
-                            title=v.get("title", ""),
-                            url=url_v,
-                            thumbnail=thumb,
-                            duration=str(v.get("duration", "")),
-                            site=self.site_name,
-                            views=str(v.get("views", "")),
-                            rating=str(v.get("rating", "")),
-                        ))
-            except Exception:
-                break
+            })
+            for page in (1, 2)
+        ]
+
+    def parse(self, body: str) -> list[VideoResult]:
+        results = []
+        for item in find_video_list(self.load_json(body)):
+            # Payload nests each entry under a "video" key.
+            v = item.get("video") if isinstance(item.get("video"), dict) else item
+            video_id = first_str(v, "video_id")
+            url = first_str(v, "url") or (f"{self.base_url}/{video_id}" if video_id else "")
+            if not url:
+                continue
+            thumbs = v.get("thumbs")
+            thumb = first_str(v, "thumb", "default_thumb")
+            if isinstance(thumbs, list) and thumbs and isinstance(thumbs[-1], dict):
+                thumb = thumbs[-1].get("src", thumb)
+            results.append(VideoResult(
+                title=first_str(v, "title"),
+                url=url,
+                thumbnail=thumb,
+                duration=first_str(v, "duration"),
+                site=self.site_name,
+                views=first_str(v, "views"),
+                rating=first_str(v, "rating"),
+            ))
         return results

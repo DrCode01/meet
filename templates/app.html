@@ -140,6 +140,8 @@ header {
 .dot.spin { background: #e0a020; animation: pulse 1s infinite; }
 .dot.ok   { background: #3cb371; }
 .dot.err  { background: #c0392b; }
+.sfail { color: #b5563f; }
+#status .sdot { cursor: help; }
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.35} }
 
 #meta { padding: 8px 18px; font-size: 0.78rem; color: #555; }
@@ -345,10 +347,18 @@ async function doSearch() {
       bar.appendChild(b);
     });
 
-    // Status dots
-    statusEl.innerHTML = (data.site_stats||[]).map(ss =>
-      `<div class="sdot"><div class="dot ${ss.count>0?'ok':'err'}"></div><span>${ss.site} ${ss.count>0?ss.count:'✗'}</span></div>`
-    ).join('');
+    // Status dots — a failing site shows why (HTTP status / error), not a bare ✗
+    statusEl.innerHTML = (data.site_stats||[]).map(ss => {
+      const ok = ss.count > 0;
+      const label = ok ? ss.count : (ss.error || 'failed');
+      const detail = (ss.fetches||[])
+        .map(f => `${f.status||'—'} ${f.url}${f.error ? ' · ' + f.error : ''}`)
+        .join('\n');
+      return `<div class="sdot" title="${esc(detail)}">
+        <div class="dot ${ok?'ok':'err'}"></div>
+        <span>${esc(ss.site)} <span class="${ok?'':'sfail'}">${esc(String(label))}</span></span>
+      </div>`;
+    }).join('');
 
     document.getElementById('meta').textContent =
       `${allResults.length} results for "${q}"`;
